@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"
+<html lang="en">
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -71,7 +71,14 @@
 							<select id="travelClass">
 								<option value="economy">Economy</option>
 								<option value="business">Business</option>
-                                <option value="public class">Public class</option>
+								<option value="public">Public class</option>
+							</select>
+						</div>
+
+						<div style="flex:1">
+							<label for="trainSelect">Train / Timing</label>
+							<select id="trainSelect">
+								<option value="">— Select train —</option>
 							</select>
 						</div>
 					</div>
@@ -80,10 +87,6 @@
 						<div style="flex:1">
 							<label for="passengers">Passengers</label>
 							<input id="passengers" type="number" min="1" value="1" required />
-						</div>
-						<div style="flex:1">
-							<label>&nbsp;</label>
-							<button type="button" class="ghost" id="managePassengers">Manage Names</button>
 						</div>
 					</div>
 
@@ -122,8 +125,22 @@
 
 	<script>
 		// Basic demo data and pricing
-		const PRICES = { economy: 250, business: 600 };
+		const PRICES = { economy: 250, business: 600, public: 150 };
 		const TOTAL_SEATS = 40; // per coach for demo
+
+		// Sample train schedule: keyed by "From-To"
+		const TRAIN_SCHEDULE = {
+			'Karur-Chennai': [
+				{ id: 'T100', name: 'Express 100', depart: '06:30', arrive: '09:10', duration: '2h 40m', price: 1.0 },
+				{ id: 'T110', name: 'Superfast 110', depart: '12:00', arrive: '14:20', duration: '2h 20m', price: 1.2 }
+			],
+			'Karur-Velur': [
+				{ id: 'T200', name: 'Local 200', depart: '07:00', arrive: '08:15', duration: '1h 15m', price: 0.9 }
+			],
+			'Karur-Viluppuram': [
+				{ id: 'T300', name: 'Intercity 300', depart: '15:00', arrive: '19:10', duration: '4h 10m', price: 1.5 }
+			]
+		};
 
 		// State
 		let selectedSeats = new Set();
@@ -140,10 +157,17 @@
 			const list = getSavedReservations(); list.unshift(obj); localStorage.setItem('reservations', JSON.stringify(list));
 		}
 
-		function getReservedSeatsForDate(date, cls){
+		function getReservedSeatsForDate(date, cls, trainId){
 			const list = getSavedReservations();
 			const seats = new Set();
-			list.forEach(r => { if(r.date === date && r.class === cls){ (r.seats||[]).forEach(s=>seats.add(Number(s))); } });
+			list.forEach(r => {
+				// only consider reservations that match date, class and train (if provided)
+				if(r.date === date && r.class === cls){
+					if(!trainId || (r.trainId && r.trainId === trainId)){
+						(r.seats||[]).forEach(s=>seats.add(Number(s)));
+					}
+				}
+			});
 			return seats;
 		}
 
@@ -151,7 +175,8 @@
 			const map = document.getElementById('seatMap'); map.innerHTML = '';
 			const cls = document.getElementById('travelClass').value;
 			const date = document.getElementById('date').value;
-			const taken = getReservedSeatsForDate(date, cls);
+			const trainId = document.getElementById('trainSelect').value || null;
+			const taken = getReservedSeatsForDate(date, cls, trainId);
 
 			for(let i=1;i<=TOTAL_SEATS;i++){
 				const btn = document.createElement('button');
@@ -177,7 +202,32 @@
 		function updateSummary(){
 			document.getElementById('selectedCount').textContent = selectedSeats.size;
 			const cls = document.getElementById('travelClass').value;
-			document.getElementById('fareTotal').textContent = (selectedSeats.size * PRICES[cls]).toFixed(0);
+			const trainId = document.getElementById('trainSelect').value;
+			let modifier = 1;
+			if(trainId){
+				const key = document.getElementById('from').value + '-' + document.getElementById('to').value;
+				const trains = TRAIN_SCHEDULE[key] || [];
+				const t = trains.find(x=>x.id===trainId);
+				if(t) modifier = t.price || 1;
+			}
+			document.getElementById('fareTotal').textContent = Math.round(selectedSeats.size * PRICES[cls] * modifier);
+		}
+
+		// Populate trains into the train select based on route
+		function populateTrains(){
+			const from = document.getElementById('from').value;
+			const to = document.getElementById('to').value;
+			const sel = document.getElementById('trainSelect');
+			sel.innerHTML = '<option value="">— Select train —</option>';
+			const key = from + '-' + to;
+			const trains = TRAIN_SCHEDULE[key] || [];
+			trains.forEach(t => {
+				const opt = document.createElement('option');
+				opt.value = t.id; opt.textContent = `${t.name} • ${t.depart} → ${t.arrive} (${t.duration})`;
+				sel.appendChild(opt);
+			});
+			// refresh seat map when train changes — assign once to avoid duplicate listeners
+			sel.onchange = ()=>{ selectedSeats.clear(); renderSeatMap(); updateSummary(); };
 		}
 
 		function renderBookings(){
@@ -198,6 +248,8 @@
 
 		document.getElementById('travelClass').addEventListener('change', renderSeatMap);
 		document.getElementById('date').addEventListener('change', ()=>{ selectedSeats.clear(); renderSeatMap(); });
+		document.getElementById('from').addEventListener('change', ()=>{ populateTrains(); selectedSeats.clear(); renderSeatMap(); });
+		document.getElementById('to').addEventListener('change', ()=>{ populateTrains(); selectedSeats.clear(); renderSeatMap(); });
 		document.getElementById('resetSeats').addEventListener('click', ()=>{ selectedSeats.clear(); renderSeatMap(); });
 
 		document.getElementById('bookingForm').addEventListener('submit', (e)=>{
@@ -212,7 +264,12 @@
 			if(selectedSeats.size > passengers){ if(!confirm('Selected seats exceed passenger count. Continue?')) return; }
 
 			const fare = selectedSeats.size * PRICES[cls];
-			const reservation = { id: uid(), from, to, date, class: cls, seats: [...selectedSeats].sort((a,b)=>a-b), fare, created: Date.now() };
+			const trainId = document.getElementById('trainSelect').value || null;
+			const trainText = (trainId ? (function(){
+				const key = from + '-' + to; const t = (TRAIN_SCHEDULE[key]||[]).find(x=>x.id===trainId); return t ? `${t.name} ${t.depart}-${t.arrive}` : '';
+			})() : '');
+
+			const reservation = { id: uid(), from, to, date, class: cls, trainId, trainText, seats: [...selectedSeats].sort((a,b)=>a-b), fare, created: Date.now() };
 			saveReservationObject(reservation);
 			alert('Booking confirmed — ID: ' + reservation.id + '\nSeats: ' + reservation.seats.join(', '));
 			selectedSeats.clear(); renderSeatMap(); renderBookings();
@@ -225,6 +282,7 @@
 		// initialize date to today
 		(function init(){
 			const today = new Date().toISOString().slice(0,10); document.getElementById('date').value = today;
+			populateTrains();
 			renderSeatMap(); renderBookings();
 		})();
 	</script>
