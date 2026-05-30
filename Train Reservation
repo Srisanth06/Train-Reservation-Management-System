@@ -1,291 +1,556 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Train Reservation System</title>
-	<style>
-		:root{--accent:#0b6efd;--muted:#6b7280;--bg:#f8fafc}
-		body{font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:var(--bg);color:#0f172a}
-		.wrap{max-width:1100px;margin:28px auto;padding:20px}
-		header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
-		h1{margin:0;font-size:20px}
-		.grid{display:grid;grid-template-columns:1fr 420px;gap:18px}
-		.card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 2px rgba(15,23,42,0.06)}
-		form .row{display:flex;gap:10px;margin-bottom:10px}
-		label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
-		input,select,button{font-size:14px;padding:8px;border-radius:6px;border:1px solid #e6edf3}
-		input[type=date]{padding:7px}
-		.seat-map{display:grid;grid-template-columns:repeat(4,56px);gap:8px;justify-content:start}
-		.seat{width:56px;height:40px;border-radius:6px;border:1px solid #cbd5e1;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#f8fafc}
-		.seat.selected{background:linear-gradient(180deg,var(--accent),#03bbb2);color:#fff;border-color:transparent}
-		.seat.taken{background:#ef4444;color:#fff;cursor:not-allowed;border-color:transparent}
-		.legend{display:flex;gap:10px;align-items:center;margin-top:8px}
-		.legend span{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
-		.small-box{width:18px;height:12px;border-radius:3px;border:1px solid #cbd5e1}
-		.summary{font-size:14px}
-		.bookings-list{max-height:360px;overflow:auto;margin-top:12px}
-		.booking-item{padding:8px;border-radius:8px;border:1px solid #eef2ff;margin-bottom:8px;background:#fbfdff}
-		.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-		button.primary{background:var(--accent);color:#fff;border:none}
-		button.ghost{background:transparent;border:1px solid #cbd5e1}
-		@media (max-width:900px){.grid{grid-template-columns:1fr;}.seat-map{grid-template-columns:repeat(4,1fr);} .card{padding:12px}}
-	</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Railway Reservation System - Dark Theme</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #0a0e27;
+            background-image: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border-bottom: 2px solid #e94560;
+        }
+        
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+            letter-spacing: 1px;
+        }
+        
+        .container {
+            width: 85%;
+            margin: auto;
+            overflow: hidden;
+            max-width: 1400px;
+        }
+        
+        .search-box {
+            background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
+            padding: 25px;
+            margin-top: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border: 1px solid #2a2a4a;
+        }
+        
+        .search-box h2 {
+            color: #e94560;
+            margin-bottom: 20px;
+            border-left: 4px solid #e94560;
+            padding-left: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #b8b8d0;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #2a2a4a;
+            border-radius: 8px;
+            background: #0f0f23;
+            color: #e0e0e0;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #e94560;
+            box-shadow: 0 0 8px rgba(233, 69, 96, 0.3);
+        }
+        
+        input[readonly] {
+            background: #1a1a30;
+            cursor: not-allowed;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #e94560 0%, #c62a47 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .train-list, .booking-form {
+            margin-top: 30px;
+            background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border: 1px solid #2a2a4a;
+        }
+        
+        .train-list h2, .booking-form h2 {
+            color: #e94560;
+            margin-bottom: 20px;
+            border-left: 4px solid #e94560;
+            padding-left: 15px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-x: auto;
+            display: block;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #2a2a4a;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            color: #e94560;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        tr:hover {
+            background: rgba(233, 69, 96, 0.1);
+            transition: background 0.3s;
+        }
+        
+        td {
+            color: #c8c8dc;
+        }
+        
+        .booking-form button[type="submit"] {
+            margin-right: 10px;
+        }
+        
+        .cancel-btn {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        }
+        
+        .cancel-btn:hover {
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        }
+        
+        footer {
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            color: #b8b8d0;
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 50px;
+            border-top: 1px solid #2a2a4a;
+        }
+        
+        /* Scrollbar styling for dark theme */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #e94560;
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #c62a47;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+            }
+            
+            th, td {
+                padding: 10px;
+                font-size: 12px;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+        
+        /* Animation for new elements */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .search-box, .train-list, .booking-form {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* Status badge */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            background: #e94560;
+            color: white;
+        }
+    </style>
 </head>
 <body>
-	<div class="wrap">
-		<header>
-			<h1>Train Reservation System — Frontend Demo</h1>
-			<div style="color:var(--muted);font-size:13px">Local demo · Client-side only</div>
-		</header>
+    <header>
+        <div class="container">
+            <h1>🚂 Indian Railways Reservation System</h1>
+            <p style="margin: 5px 0 0; opacity: 0.8;">Secure & Reliable Ticket Booking</p>
+        </div>
+    </header>
 
-		<div class="grid">
-			<section class="card">
-				<form id="bookingForm">
-					<div class="row" style="align-items:end">
-						<div style="flex:1">
-							<label for="from">From</label>
-							<select id="from" required>
-								<option value="Karur">Karur</option>
-								<option value="Madhurai">Madhurai</option>
-								<option value="Dindigul">Dindigul</option>
-							</select>
-						</div>
-						<div style="flex:1">
-							<label for="to">To</label>
-							<select id="to" required>
-								<option value="Chennai">Chennai</option>
-								<option value="Velur">Velur</option>
-								<option value="Viluppuram">Viluppuram</option>
-							</select>
-						</div>
-					</div>
+    <div class="container">
+        <div class="search-box">
+            <h2>🔍 Search Trains</h2>
+            <form id="searchForm">
+                <div class="form-group">
+                    <label for="from">🚉 From:</label>
+                    <select id="from" required>
+                        <option value="">Select departure station</option>
+                        <option value="delhi">New Delhi (NDLS)</option>
+                        <option value="mumbai">Mumbai Central (MMCT)</option>
+                        <option value="chennai">Chennai Central (MAS)</option>
+                        <option value="kolkata">Kolkata Howrah (HWH)</option>
+                        <option value="bangalore">Bangalore (SBC)</option>
+                        <option value="hyderabad">Hyderabad (HYB)</option>
+                        <option value="pune">Pune (PUNE)</option>
+                        <option value="ahmedabad">Ahmedabad (ADI)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="to">🚉 To:</label>
+                    <select id="to" required>
+                        <option value="">Select arrival station</option>
+                        <option value="delhi">New Delhi (NDLS)</option>
+                        <option value="mumbai">Mumbai Central (MMCT)</option>
+                        <option value="chennai">Chennai Central (MAS)</option>
+                        <option value="kolkata">Kolkata Howrah (HWH)</option>
+                        <option value="bangalore">Bangalore (SBC)</option>
+                        <option value="hyderabad">Hyderabad (HYB)</option>
+                        <option value="pune">Pune (PUNE)</option>
+                        <option value="ahmedabad">Ahmedabad (ADI)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="date">📅 Journey Date:</label>
+                    <input type="date" id="date" required>
+                </div>
+                <div class="form-group">
+                    <label for="class">🚆 Class:</label>
+                    <select id="class">
+                        <option value="all">All Classes</option>
+                        <option value="sl">Sleeper (SL)</option>
+                        <option value="3a">AC 3 Tier (3A)</option>
+                        <option value="2a">AC 2 Tier (2A)</option>
+                        <option value="1a">AC First Class (1A)</option>
+                        <option value="cc">Chair Car (CC)</option>
+                    </select>
+                </div>
+                <button type="submit">🔎 Search Trains</button>
+            </form>
+        </div>
 
-					<div class="row">
-						<div style="flex:1">
-							<label for="date">Date</label>
-							<input id="date" type="date" required />
-						</div>
-						<div style="flex:1">
-							<label for="travelClass">Class</label>
-							<select id="travelClass">
-								<option value="economy">Economy</option>
-								<option value="business">Business</option>
-								<option value="public">Public class</option>
-							</select>
-						</div>
+        <div class="train-list" id="trainResults" style="display: none;">
+            <h2>🚆 Available Trains</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Train No.</th>
+                            <th>Train Name</th>
+                            <th>Departure</th>
+                            <th>Arrival</th>
+                            <th>Duration</th>
+                            <th>Available Seats</th>
+                            <th>Fare (Starting from)</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>12301</td>
+                            <td>🚄 Rajdhani Express</td>
+                            <td>17:30 (NDLS)</td>
+                            <td>08:30 (MMCT)</td>
+                            <td>15h 0m</td>
+                            <td><span class="status-badge">Available</span><br>SL: 24 | 3A: 12 | 2A: 5</td>
+                            <td>₹500 (SL)<br>₹1400 (3A)<br>₹2050 (2A)</td>
+                            <td><button onclick="bookTicket('12301', 'Rajdhani Express')">📖 Book Now</button></td>
+                        </tr>
+                        <tr>
+                            <td>12951</td>
+                            <td>🚄 Mumbai Rajdhani</td>
+                            <td>16:55 (NDLS)</td>
+                            <td>08:30 (MMCT)</td>
+                            <td>15h 35m</td>
+                            <td><span class="status-badge">Available</span><br>SL: 18 | 3A: 8 | 2A: 3</td>
+                            <td>₹550 (SL)<br>₹1500 (3A)<br>₹2200 (2A)</td>
+                            <td><button onclick="bookTicket('12951', 'Mumbai Rajdhani')">📖 Book Now</button></td>
+                        </tr>
+                        <tr>
+                            <td>12627</td>
+                            <td>🚂 Karnataka Express</td>
+                            <td>20:15 (SBC)</td>
+                            <td>08:30 (NDLS)</td>
+                            <td>36h 15m</td>
+                            <td><span class="status-badge">Available</span><br>SL: 42 | 3A: 20 | 2A: 8</td>
+                            <td>₹800 (SL)<br>₹1800 (3A)<br>₹2500 (2A)</td>
+                            <td><button onclick="bookTicket('12627', 'Karnataka Express')">📖 Book Now</button></td>
+                        </tr>
+                        <tr>
+                            <td>12363</td>
+                            <td>🚄 Kolkata Rajdhani</td>
+                            <td>16:50 (HWH)</td>
+                            <td>08:30 (NDLS)</td>
+                            <td>15h 40m</td>
+                            <td><span class="status-badge">Available</span><br>SL: 15 | 3A: 10 | 2A: 4</td>
+                            <td>₹520 (SL)<br>₹1450 (3A)<br>₹2100 (2A)</td>
+                            <td><button onclick="bookTicket('12363', 'Kolkata Rajdhani')">📖 Book Now</button></td>
+                        </tr>
+                        <tr>
+                            <td>12295</td>
+                            <td>🚂 Sanghamitra Express</td>
+                            <td>07:15 (SBC)</td>
+                            <td>22:30 (DNR)</td>
+                            <td>39h 15m</td>
+                            <td><span class="status-badge">Available</span><br>SL: 35 | 3A: 15 | 2A: 6</td>
+                            <td>₹950 (SL)<br>₹2100 (3A)<br>₹2800 (2A)</td>
+                            <td><button onclick="bookTicket('12295', 'Sanghamitra Express')">📖 Book Now</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-						<div style="flex:1">
-							<label for="trainSelect">Train / Timing</label>
-							<select id="trainSelect">
-								<option value="">— Select train —</option>
-							</select>
-						</div>
-					</div>
+        <div class="booking-form" id="bookingForm" style="display: none;">
+            <h2>🎫 Book Your Ticket</h2>
+            <form id="ticketForm">
+                <div class="form-group">
+                    <label for="trainNumber">🚆 Train Number:</label>
+                    <input type="text" id="trainNumber" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="trainName">🚆 Train Name:</label>
+                    <input type="text" id="trainName" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="journeyDate">📅 Journey Date:</label>
+                    <input type="text" id="journeyDate" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="passengerName">👤 Passenger Name:</label>
+                    <input type="text" id="passengerName" required placeholder="Enter full name">
+                </div>
+                <div class="form-group">
+                    <label for="age">📅 Age:</label>
+                    <input type="number" id="age" required min="1" max="120" placeholder="Enter age">
+                </div>
+                <div class="form-group">
+                    <label for="gender">⚥ Gender:</label>
+                    <select id="gender" required>
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="classPreference">🚆 Class Preference:</label>
+                    <select id="classPreference" required>
+                        <option value="">Select Class</option>
+                        <option value="sl">Sleeper (SL)</option>
+                        <option value="3a">AC 3 Tier (3A)</option>
+                        <option value="2a">AC 2 Tier (2A)</option>
+                        <option value="1a">AC First Class (1A)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="berthPreference">🛏️ Berth Preference:</label>
+                    <select id="berthPreference">
+                        <option value="no">No Preference</option>
+                        <option value="lower">Lower Berth</option>
+                        <option value="middle">Middle Berth</option>
+                        <option value="upper">Upper Berth</option>
+                        <option value="side">Side Lower/Upper</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="mobile">📱 Mobile Number:</label>
+                    <input type="tel" id="mobile" required pattern="[0-9]{10}" placeholder="10-digit mobile number">
+                </div>
+                <div class="form-group">
+                    <label for="email">📧 Email ID:</label>
+                    <input type="email" id="email" placeholder="Enter email address">
+                </div>
+                <button type="submit">✅ Confirm Booking</button>
+                <button type="button" onclick="cancelBooking()" class="cancel-btn">❌ Cancel</button>
+            </form>
+        </div>
+    </div>
 
-					<div class="row">
-						<div style="flex:1">
-							<label for="passengers">Passengers</label>
-							<input id="passengers" type="number" min="1" value="1" required />
-						</div>
-					</div>
+    <footer>
+        <div class="container">
+            <p>© 2024 Indian Railways Reservation System | Safe & Secure Booking | 24/7 Customer Support</p>
+            <p style="font-size: 12px; margin-top: 5px;">🚆 Book your tickets with confidence | IRCTC Authorized Partner</p>
+        </div>
+    </footer>
 
-					<div style="margin-top:6px">
-						<label>Seat Map</label>
-						<div id="seatMap" class="seat-map" aria-label="Seat selection" role="grid"></div>
-						<div class="legend">
-							<span><i class="small-box" style="background: #f8fafc;border-color:#cbd5e1"></i> Available</span>
-							<span><i class="small-box" style="background:var(--accent)"></i> Selected</span>
-							<span><i class="small-box" style="background:#ef4444"></i> Taken</span>
-						</div>
-					</div>
+    <script>
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date').min = today;
+        document.getElementById('date').value = today;
 
-					<div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
-						<div class="summary">
-							<div>Selected seats: <span id="selectedCount">0</span></div>
-							<div>Fare: ₹<span id="fareTotal">0</span></div>
-						</div>
-						<div class="actions">
-							<button type="button" class="ghost" id="resetSeats">Reset Seats</button>
-							<button type="submit" class="primary">Confirm Booking</button>
-						</div>
-					</div>
-				</form>
-			</section>
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const from = document.getElementById('from').value;
+            const to = document.getElementById('to').value;
+            const date = document.getElementById('date').value;
+            const trainClass = document.getElementById('class').value;
+            
+            if(from && to && date) {
+                if(from === to) {
+                    alert('⚠️ Departure and arrival stations cannot be the same!');
+                    return;
+                }
+                
+                document.getElementById('trainResults').style.display = 'block';
+                document.getElementById('bookingForm').style.display = 'none';
+                
+                // Scroll to results
+                document.getElementById('trainResults').scrollIntoView({ behavior: 'smooth' });
+                
+                // Show success message
+                let classText = trainClass === 'all' ? 'all classes' : document.getElementById('class').options[document.getElementById('class').selectedIndex].text;
+                alert(`✅ Found 5 trains from ${from.toUpperCase()} to ${to.toUpperCase()} on ${date}\n🪑 Class: ${classText}\n\nSelect your preferred train to continue booking.`);
+            } else {
+                alert('⚠️ Please fill in all search fields!\n\nPlease select departure station, arrival station, and journey date.');
+            }
+        });
 
-			<aside class="card">
-				<div style="display:flex;justify-content:space-between;align-items:center">
-					<strong>Your Bookings</strong>
-					<button id="clearAll" class="ghost">Clear All</button>
-				</div>
-				<div id="bookings" class="bookings-list" aria-live="polite"></div>
-			</aside>
-		</div>
-	</div>
+        function bookTicket(trainNumber, trainName) {
+            // Check if journey date is selected
+            const journeyDate = document.getElementById('date').value;
+            if(!journeyDate) {
+                alert('⚠️ Please select a journey date first!\n\nGo back and select your travel date.');
+                return;
+            }
+            
+            document.getElementById('trainResults').style.display = 'none';
+            document.getElementById('bookingForm').style.display = 'block';
+            
+            document.getElementById('trainNumber').value = trainNumber;
+            document.getElementById('trainName').value = trainName;
+            document.getElementById('journeyDate').value = journeyDate;
+            
+            // Scroll to booking form
+            document.getElementById('bookingForm').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function cancelBooking() {
+            document.getElementById('bookingForm').style.display = 'none';
+            document.getElementById('trainResults').style.display = 'block';
+            
+            // Reset form
+            document.getElementById('ticketForm').reset();
+        }
 
-	<script>
-		// Basic demo data and pricing
-		const PRICES = { economy: 250, business: 600, public: 150 };
-		const TOTAL_SEATS = 40; // per coach for demo
-
-		// Sample train schedule: keyed by "From-To"
-		const TRAIN_SCHEDULE = {
-			'Karur-Chennai': [
-				{ id: 'T100', name: 'Express 100', depart: '06:30', arrive: '09:10', duration: '2h 40m', price: 1.0 },
-				{ id: 'T110', name: 'Superfast 110', depart: '12:00', arrive: '14:20', duration: '2h 20m', price: 1.2 }
-			],
-			'Karur-Velur': [
-				{ id: 'T200', name: 'Local 200', depart: '07:00', arrive: '08:15', duration: '1h 15m', price: 0.9 }
-			],
-			'Karur-Viluppuram': [
-				{ id: 'T300', name: 'Intercity 300', depart: '15:00', arrive: '19:10', duration: '4h 10m', price: 1.5 }
-			]
-		};
-
-		// State
-		let selectedSeats = new Set();
-
-		function uid() { return 'R' + Date.now().toString(36).slice(-6).toUpperCase(); }
-
-		function formatSeats(set){ return [...set].sort((a,b)=>a-b).join(', ') || '—'; }
-
-		function getSavedReservations(){
-			try{ return JSON.parse(localStorage.getItem('reservations')||'[]'); }catch(e){return []}
-		}
-
-		function saveReservationObject(obj){
-			const list = getSavedReservations(); list.unshift(obj); localStorage.setItem('reservations', JSON.stringify(list));
-		}
-
-		function getReservedSeatsForDate(date, cls, trainId){
-			const list = getSavedReservations();
-			const seats = new Set();
-			list.forEach(r => {
-				// only consider reservations that match date, class and train (if provided)
-				if(r.date === date && r.class === cls){
-					if(!trainId || (r.trainId && r.trainId === trainId)){
-						(r.seats||[]).forEach(s=>seats.add(Number(s)));
-					}
-				}
-			});
-			return seats;
-		}
-
-		function renderSeatMap(){
-			const map = document.getElementById('seatMap'); map.innerHTML = '';
-			const cls = document.getElementById('travelClass').value;
-			const date = document.getElementById('date').value;
-			const trainId = document.getElementById('trainSelect').value || null;
-			const taken = getReservedSeatsForDate(date, cls, trainId);
-
-			for(let i=1;i<=TOTAL_SEATS;i++){
-				const btn = document.createElement('button');
-				btn.className = 'seat'; btn.type='button'; btn.setAttribute('data-seat', i);
-				btn.textContent = i;
-				if(taken.has(i)){
-					btn.classList.add('taken'); btn.setAttribute('aria-disabled', 'true');
-				} else if(selectedSeats.has(i)){
-					btn.classList.add('selected');
-				}
-				btn.addEventListener('click', ()=>{
-					if(btn.classList.contains('taken')) return;
-					const seatNum = Number(btn.dataset.seat);
-					if(selectedSeats.has(seatNum)){ selectedSeats.delete(seatNum); btn.classList.remove('selected'); }
-					else { selectedSeats.add(seatNum); btn.classList.add('selected'); }
-					updateSummary();
-				});
-				map.appendChild(btn);
-			}
-			updateSummary();
-		}
-
-		function updateSummary(){
-			document.getElementById('selectedCount').textContent = selectedSeats.size;
-			const cls = document.getElementById('travelClass').value;
-			const trainId = document.getElementById('trainSelect').value;
-			let modifier = 1;
-			if(trainId){
-				const key = document.getElementById('from').value + '-' + document.getElementById('to').value;
-				const trains = TRAIN_SCHEDULE[key] || [];
-				const t = trains.find(x=>x.id===trainId);
-				if(t) modifier = t.price || 1;
-			}
-			document.getElementById('fareTotal').textContent = Math.round(selectedSeats.size * PRICES[cls] * modifier);
-		}
-
-		// Populate trains into the train select based on route
-		function populateTrains(){
-			const from = document.getElementById('from').value;
-			const to = document.getElementById('to').value;
-			const sel = document.getElementById('trainSelect');
-			sel.innerHTML = '<option value="">— Select train —</option>';
-			const key = from + '-' + to;
-			const trains = TRAIN_SCHEDULE[key] || [];
-			trains.forEach(t => {
-				const opt = document.createElement('option');
-				opt.value = t.id; opt.textContent = `${t.name} • ${t.depart} → ${t.arrive} (${t.duration})`;
-				sel.appendChild(opt);
-			});
-			// refresh seat map when train changes — assign once to avoid duplicate listeners
-			sel.onchange = ()=>{ selectedSeats.clear(); renderSeatMap(); updateSummary(); };
-		}
-
-		function renderBookings(){
-			const list = getSavedReservations();
-			const container = document.getElementById('bookings'); container.innerHTML = '';
-			if(list.length===0) container.innerHTML = '<div style="color:var(--muted);margin-top:8px">No bookings yet.</div>';
-			list.forEach(r=>{
-				const el = document.createElement('div'); el.className='booking-item';
-				el.innerHTML = `<div style="font-weight:600">${r.id} — ${r.from} → ${r.to} • ${r.date}</div>
-					<div style="color:var(--muted);font-size:13px">Class: ${r.class} · Seats: ${r.seats.join(', ')} · Fare: ₹${r.fare}</div>
-					<div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center">
-						<small style="color:var(--muted)">Booked: ${new Date(r.created).toLocaleString()}</small>
-						<div><button data-id="${r.id}" class="ghost">Details</button></div>
-					</div>`;
-				container.appendChild(el);
-			});
-		}
-
-		document.getElementById('travelClass').addEventListener('change', renderSeatMap);
-		document.getElementById('date').addEventListener('change', ()=>{ selectedSeats.clear(); renderSeatMap(); });
-		document.getElementById('from').addEventListener('change', ()=>{ populateTrains(); selectedSeats.clear(); renderSeatMap(); });
-		document.getElementById('to').addEventListener('change', ()=>{ populateTrains(); selectedSeats.clear(); renderSeatMap(); });
-		document.getElementById('resetSeats').addEventListener('click', ()=>{ selectedSeats.clear(); renderSeatMap(); });
-
-		document.getElementById('bookingForm').addEventListener('submit', (e)=>{
-			e.preventDefault();
-			const from = document.getElementById('from').value;
-			const to = document.getElementById('to').value;
-			const date = document.getElementById('date').value;
-			const cls = document.getElementById('travelClass').value;
-			const passengers = Number(document.getElementById('passengers').value) || 1;
-			if(!date){ alert('Please choose a travel date.'); return; }
-			if(selectedSeats.size===0){ alert('Please select at least one seat.'); return; }
-			if(selectedSeats.size > passengers){ if(!confirm('Selected seats exceed passenger count. Continue?')) return; }
-
-			const fare = selectedSeats.size * PRICES[cls];
-			const trainId = document.getElementById('trainSelect').value || null;
-			const trainText = (trainId ? (function(){
-				const key = from + '-' + to; const t = (TRAIN_SCHEDULE[key]||[]).find(x=>x.id===trainId); return t ? `${t.name} ${t.depart}-${t.arrive}` : '';
-			})() : '');
-
-			const reservation = { id: uid(), from, to, date, class: cls, trainId, trainText, seats: [...selectedSeats].sort((a,b)=>a-b), fare, created: Date.now() };
-			saveReservationObject(reservation);
-			alert('Booking confirmed — ID: ' + reservation.id + '\nSeats: ' + reservation.seats.join(', '));
-			selectedSeats.clear(); renderSeatMap(); renderBookings();
-		});
-
-		document.getElementById('clearAll').addEventListener('click', ()=>{
-			if(confirm('Clear all saved bookings?')){ localStorage.removeItem('reservations'); renderSeatMap(); renderBookings(); }
-		});
-
-		// initialize date to today
-		(function init(){
-			const today = new Date().toISOString().slice(0,10); document.getElementById('date').value = today;
-			populateTrains();
-			renderSeatMap(); renderBookings();
-		})();
-	</script>
+        document.getElementById('ticketForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const passengerName = document.getElementById('passengerName').value;
+            const age = document.getElementById('age').value;
+            const gender = document.getElementById('gender').value;
+            const mobile = document.getElementById('mobile').value;
+            const trainNumber = document.getElementById('trainNumber').value;
+            const journeyDate = document.getElementById('journeyDate').value;
+            const trainClass = document.getElementById('classPreference').value;
+            
+            if(passengerName && age && gender && mobile.length === 10 && trainClass) {
+                const pnr = Math.floor(Math.random() * 1000000000);
+                const bookingId = 'BK' + Date.now();
+                
+                let message = `🎉 BOOKING CONFIRMED! 🎉\n\n` +
+                              `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                              `📌 Booking ID: ${bookingId}\n` +
+                              `🔢 PNR Number: ${pnr}\n` +
+                              `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                              `🚆 Train: ${trainNumber}\n` +
+                              `👤 Passenger: ${passengerName}\n` +
+                              `📅 Journey Date: ${journeyDate}\n` +
+                              `🚇 Class: ${document.getElementById('classPreference').options[document.getElementById('classPreference').selectedIndex].text}\n` +
+                              `🛏️ Berth: ${document.getElementById('berthPreference').options[document.getElementById('berthPreference').selectedIndex].text}\n` +
+                              `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                              `📱 Mobile: ${mobile}\n` +
+                              `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                              `✨ Thank you for choosing Indian Railways!\n` +
+                              `🚆 Happy Journey!`;
+                
+                alert(message);
+                
+                // Reset and hide booking form
+                document.getElementById('ticketForm').reset();
+                document.getElementById('bookingForm').style.display = 'none';
+                document.getElementById('trainResults').style.display = 'block';
+                
+                // Scroll to results
+                document.getElementById('trainResults').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                let errorMsg = '⚠️ Please fill in all required fields correctly:\n\n';
+                if(!passengerName) errorMsg += '• Passenger Name is required\n';
+                if(!age) errorMsg += '• Age is required\n';
+                if(!gender) errorMsg += '• Gender is required\n';
+                if(!trainClass) errorMsg += '• Class Preference is required\n';
+                if(mobile.length !== 10) errorMsg += '• Mobile number must be 10 digits\n';
+                alert(errorMsg);
+            }
+        });
+    </script>
 </body>
 </html>
-
